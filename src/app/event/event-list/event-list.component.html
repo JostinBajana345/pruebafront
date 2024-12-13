@@ -1,0 +1,192 @@
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<div class="container-fluid mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-12 mb-4 lg:mb-0">
+      <div class="card shadow-lg rounded">
+        <div class="card-header bg-primary text-white">
+          <h1 class="text-center mb-0">{{ "event-list-title" | translate }}</h1>
+        </div>
+        <div class="card-body">
+          <div class="form-group text-center mb-4">
+            <label
+              for="sportFilter"
+              class="form-label font-semibold text-primary"
+              >{{ "select-sport-label" | translate }}</label
+            >
+            <select
+              id="sportFilter"
+              class="form-select d-inline-block w-auto"
+              [(ngModel)]="selectedSportId"
+              (change)="loadEvent()"
+            >
+              <option value="">{{ "all-sports" | translate }}</option>
+              <option *ngFor="let sport of sports" [value]="sport.id">
+                {{ sport.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group text-center mb-4">
+            <label
+              for="searchInput"
+              class="form-label font-semibold text-primary"
+              >{{ "search-team-label" | translate }}</label
+            >
+            <input
+              type="text"
+              id="searchInput"
+              class="form-control"
+              placeholder="{{ 'search-team-label' | translate }}"
+              [(ngModel)]="searchTerm"
+              (input)="filterEvents()"
+            />
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead class="bg-primary text-white">
+                <tr>
+                  <th>{{ "event-name" | translate }}</th>
+                  <th>{{ "home-team" | translate }}</th>
+                  <th>{{ "away-team" | translate }}</th>
+                  <th>{{ "date" | translate }}</th>
+                  <th>{{ "odds" | translate }}</th>
+                  <th>{{ "select" | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let event of filteredEvents">
+                  <td>{{ event.sportEventName.es }}</td>
+                  <td>{{ event.competitorHome.competitorName.es }}</td>
+                  <td>{{ event.competitorAway.competitorName.es }}</td>
+                  <td>{{ event.scheduled | date : "short" }}</td>
+                  <td>
+                    <div
+                      class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2"
+                    >
+                      <div
+                        *ngFor="
+                          let outcome of event.markets[0].marketLines[0]
+                            .outcomes
+                        "
+                        class="p-2 border rounded-lg bg-gray-100 text-center"
+                      >
+                        <span class="text-sm font-semibold text-gray-800">
+                          {{ outcome.outcomeName.es }}: {{ outcome.odds }}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <button
+                      class="btn btn-outline-primary btn-sm"
+                      (click)="selectEvent(event)"
+                    >
+                      {{ "select-event" | translate }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showSidebar" class="betting-sidebar" id="bettingSidebar">
+  <div class="card shadow-lg">
+    <div class="card-header bg-primary text-white">
+      <h3 class="text-center mb-0">{{ "betting-title" | translate }}</h3>
+      <button
+        id="closeSidebar"
+        class="btn btn-outline-light btn-sm float-right"
+        (click)="closeSidebar()"
+      >
+        {{ "close" | translate }}
+      </button>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="submitBet()">
+        <div class="mb-3">
+          <label for="amount" class="form-label">{{
+            "bet-amount-label" | translate
+          }}</label>
+          <input
+            type="number"
+            id="amount"
+            class="form-control"
+            [(ngModel)]="betAmount"
+            name="amount"
+            required
+            min="1"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="result" class="form-label">{{
+            "select-result-label" | translate
+          }}</label>
+          <select
+            id="result"
+            class="form-select"
+            [(ngModel)]="selectedOutcome"
+            name="result"
+            required
+          >
+            <option
+              *ngFor="
+                let outcome of selectedEvent.markets[0].marketLines[0].outcomes
+              "
+              [value]="outcome._id"
+            >
+              {{ outcome.outcomeName.es }} ({{ outcome.odds }})
+            </option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">
+          {{ "submit-bet" | translate }}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div *ngIf="allBets.length > 0" class="card mt-3 shadow-lg">
+    <div class="card-header bg-info text-white">
+      <h3 class="text-center mb-0">{{ "bets-summary-title" | translate }}</h3>
+    </div>
+    <div class="card-body">
+      <div class="scrollable">
+        <ul class="list-group list-group-flush">
+          <li *ngFor="let bet of allBets" class="list-group-item">
+            <strong>{{ "event" | translate }}:</strong> {{ bet.eventName }}
+            <br />
+            <strong>{{ "home-team" | translate }}:</strong> {{ bet.homeTeam }}
+            <br />
+            <strong>{{ "away-team" | translate }}:</strong> {{ bet.awayTeam }}
+            <br />
+            <strong>{{ "selected-result" | translate }}:</strong>
+            {{ bet.result }} <br />
+            <strong>{{ "bet-amount" | translate }}:</strong>
+            {{ bet.amount | currency }}
+            <br />
+            <strong>{{ "selected-odds" | translate }}:</strong> {{ bet.odds }}
+            <br />
+            <strong>{{ "potential-winnings" | translate }}:</strong>
+            {{ bet.potentialWinnings | currency }}
+            <p>-------------------------------------------</p>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Botón flotante para ver todas las apuestas -->
+<div *ngIf="showBetButton" class="floating-btn" (click)="showSidebar = true">
+  {{ "view-bets" | translate }}
+</div>
